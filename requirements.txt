@@ -1,0 +1,14 @@
+# Visualización y matemáticas
+matplotlib
+numpy
+scipy
+rustworkx
+
+# Qiskit SDK con soporte de visualización
+qiskit[visualization]
+
+# IBM Quantum Runtime
+qiskit-ibm-runtime
+
+# Addon de optimización para QAOA / MaxCut
+qiskit-addon-opt-mapper

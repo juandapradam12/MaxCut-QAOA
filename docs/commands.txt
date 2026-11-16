@@ -1,0 +1,31 @@
+# ============================================================
+#  MaxCut-QAOA — Comandos útiles
+# ============================================================
+
+# --- Entorno virtual ---
+
+# Crear el venv
+python3 -m venv .venv
+
+# Activar el venv (macOS / Linux)
+source .venv/bin/activate
+
+# Desactivar el venv
+deactivate
+
+# --- Dependencias ---
+
+# Instalar dependencias desde requirements.txt
+.venv/bin/pip install -r requirements.txt
+
+# Actualizar pip
+.venv/bin/pip install --upgrade pip
+
+# Guardar dependencias actuales en requirements.txt
+.venv/bin/pip freeze > requirements.txt
+
+# --- IBM Quantum ---
+
+# Guardar token de acceso a IBM Quantum (ejecutar una sola vez)
+# from qiskit_ibm_runtime import QiskitRuntimeService
+# QiskitRuntimeService.save_account(channel="ibm_quantum", token="TU_TOKEN_AQUI")
