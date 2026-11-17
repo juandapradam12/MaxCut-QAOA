@@ -156,3 +156,109 @@ def sample_final_distribution(
     print(f"    Sampled {len(counts_int)} unique bitstrings over {shots} shots.")
 
     return optimized_circuit, final_distribution_int, final_distribution_bin
+
+
+def run_qaoa_optimization_large(
+    candidate_circuit: QuantumCircuit,
+    cost_hamiltonian: SparsePauliOp,
+    backend: IBMBackend,
+) -> tuple[list[float], object]:
+    """Run the QAOA optimization loop for the large-scale (100-node) instance.
+
+    Same structure as run_qaoa_optimization but with reps=1, so only 2
+    parameters: [beta, gamma]. Uses job mode (Open Plan compatible).
+
+    Args:
+        candidate_circuit: Transpiled 100-node QAOA circuit.
+        cost_hamiltonian:  H_C for the 100-node graph.
+        backend:           IBM Quantum backend.
+
+    Returns:
+        objective_func_vals: Cost values recorded at each iteration.
+        result:              Optimization result from scipy.optimize.minimize.
+    """
+    # reps=1 → only 2 parameters: [beta, gamma]
+    initial_gamma = np.pi
+    initial_beta = np.pi / 2
+    init_params = [initial_beta, initial_gamma]
+
+    objective_func_vals: list[float] = []
+
+    def cost_func_estimator(params, ansatz, hamiltonian, estimator):
+        isa_hamiltonian = hamiltonian.apply_layout(ansatz.layout)
+        pub = (ansatz, isa_hamiltonian, params)
+        job = estimator.run([pub])
+        results = job.result()[0]
+        cost = results.data.evs
+        objective_func_vals.append(cost)
+        return cost
+
+    # Job mode — compatible with Open Plan
+    estimator = Estimator(mode=backend)
+    estimator.options.default_shots = 1000
+    estimator.options.dynamical_decoupling.enable = True
+    estimator.options.dynamical_decoupling.sequence_type = "XY4"
+    estimator.options.twirling.enable_gates = True
+    estimator.options.twirling.num_randomizations = "auto"
+    estimator.options.environment.job_tags = ["TUT_QAOA"]
+
+    result = minimize(
+        cost_func_estimator,
+        init_params,
+        args=(candidate_circuit, cost_hamiltonian, estimator),
+        method="COBYLA",
+    )
+    print(result)
+
+    return objective_func_vals, result
+
+
+def sample_final_distribution_large(
+    candidate_circuit: QuantumCircuit,
+    result,
+    backend: IBMBackend,
+) -> tuple[QuantumCircuit, dict[int, float]]:
+    """Assign optimized parameters and sample the final distribution for the large-scale instance.
+
+    Same as sample_final_distribution but returns only the integer distribution,
+    since the large-scale post-processing uses evaluate_sparse_pauli instead of
+    binary string decoding.
+
+    Args:
+        candidate_circuit: Transpiled 100-node QAOA circuit.
+        result:            Optimization result from run_qaoa_optimization_large().
+        backend:           IBM Quantum backend.
+
+    Returns:
+        optimized_circuit_100:    Circuit with optimal parameters assigned.
+        final_distribution_100_int: Probability distribution keyed by integer bitstrings.
+    """
+    # Assign the optimal angles to the circuit
+    optimized_circuit_100 = candidate_circuit.assign_parameters(result.x)
+
+    # Save the optimized circuit diagram
+    fig = optimized_circuit_100.draw("mpl", fold=False, idle_wires=False)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = OUTPUT_DIR / "optimized_circuit_large.png"
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"    Figure saved to: {output_path}")
+
+    # Sample with the Sampler primitive
+    sampler = Sampler(mode=backend)
+    sampler.options.default_shots = 10000
+    sampler.options.dynamical_decoupling.enable = True
+    sampler.options.dynamical_decoupling.sequence_type = "XY4"
+    sampler.options.twirling.enable_gates = True
+    sampler.options.twirling.num_randomizations = "auto"
+    sampler.options.environment.job_tags = ["TUT_QAOA"]
+
+    pub = (optimized_circuit_100,)
+    job = sampler.run([pub], shots=int(1e4))
+    counts_int = job.result()[0].data.meas.get_int_counts()
+    shots = sum(counts_int.values())
+    final_distribution_100_int = {key: val / shots for key, val in counts_int.items()}
+
+    print(f"    Sampled {len(counts_int)} unique bitstrings over {shots} shots.")
+
+    return optimized_circuit_100, final_distribution_100_int

@@ -54,3 +54,38 @@ def transpile_circuit(circuit: QuantumCircuit) -> tuple[QuantumCircuit, IBMBacke
     print(f"    Figure saved to: {output_path}")
 
     return candidate_circuit, backend
+
+
+def transpile_with_backend(
+    circuit: QuantumCircuit,
+    backend: IBMBackend,
+    output_filename: str = "transpiled_circuit_large.png",
+) -> QuantumCircuit:
+    """Transpile a circuit using an already-selected backend.
+
+    Same as transpile_circuit but skips the IBM Quantum service connection,
+    reusing a backend that was obtained in a previous step. Used for the
+    large-scale workflow where the backend is already known from building
+    the graph via the coupling map.
+
+    Args:
+        circuit:         Parametrized QAOA circuit to transpile.
+        backend:         IBM Quantum backend to target.
+        output_filename: Filename for the saved circuit diagram.
+
+    Returns:
+        candidate_circuit: Transpiled circuit ready to execute on hardware.
+    """
+    # Step 2: transpile for hardware using optimization_level=3
+    pm = generate_preset_pass_manager(optimization_level=3, backend=backend)
+    candidate_circuit = pm.run(circuit)
+
+    # Save the transpiled circuit diagram
+    fig = candidate_circuit.draw("mpl", fold=False, idle_wires=False)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = OUTPUT_DIR / output_filename
+    fig.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    print(f"    Figure saved to: {output_path}")
+
+    return candidate_circuit
