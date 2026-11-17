@@ -8,7 +8,7 @@ OUTPUT_DIR = Path("output/figures")
 
 
 def build_small_graph() -> rx.PyGraph:
-    """Construye y visualiza el grafo de 5 nodos para el ejemplo pequeño de Max-Cut."""
+    """Build and visualize the 5-node graph for the small-scale Max-Cut example."""
     n_small = 5
 
     graph = rx.PyGraph()
@@ -23,12 +23,12 @@ def build_small_graph() -> rx.PyGraph:
     ]
     graph.add_edges_from(edge_list)
     draw_graph(graph, node_size=600, with_labels=True)
-    plt.title("Grafo de 5 nodos — Max-Cut")
+    plt.title("5-node graph — Max-Cut")
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     output_path = OUTPUT_DIR / "small_graph.png"
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
-    print(f"    Figura guardada en: {output_path}")
+    print(f"    Figure saved to: {output_path}")
 
     plt.show()
 

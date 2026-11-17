@@ -4,6 +4,9 @@ numpy
 scipy
 rustworkx
 
+# Utilities
+python-dotenv
+
 # Qiskit SDK con soporte de visualización
 qiskit[visualization]
 

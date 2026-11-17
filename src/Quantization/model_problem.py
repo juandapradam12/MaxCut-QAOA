@@ -4,28 +4,28 @@ from qiskit_addon_opt_mapper.problems.optimization_problem import OptimizationPr
 
 
 def model_problem(graph: rx.PyGraph) -> tuple[Maxcut, OptimizationProblem]:
-    """Modela el problema Max-Cut como un OptimizationProblem de Qiskit.
+    """Model the Max-Cut problem as a Qiskit OptimizationProblem.
 
-    La clase Maxcut acepta directamente el grafo de rustworkx y devuelve un
-    OptimizationProblem cuyo objetivo es maximizar el valor del corte.
+    The Maxcut class accepts a rustworkx graph directly and returns an
+    OptimizationProblem whose objective is to maximize the cut value.
 
-    Cada arista (i, j) contribuye el término:
+    Each edge (i, j) contributes the term:
         x_i + x_j - 2 * x_i * x_j
-    al objetivo, donde x_i ∈ {0, 1} indica a qué conjunto pertenece el nodo i.
+    to the objective, where x_i ∈ {0, 1} indicates which set node i belongs to.
 
     Args:
-        graph: Grafo de rustworkx con los nodos y aristas del problema.
+        graph: rustworkx graph with the nodes and edges of the problem.
 
     Returns:
-        maxcut: Instancia de Maxcut (usada luego para interpretar resultados).
-        maxcut_problem: OptimizationProblem listo para convertir a QUBO.
+        maxcut: Maxcut instance (used later to interpret results).
+        maxcut_problem: OptimizationProblem ready to be converted to QUBO.
     """
-    # Crear la instancia de Maxcut a partir del grafo.
-    # Internamente construye el objetivo: max sum_{(i,j)} x_i + x_j - 2*x_i*x_j
+    # Create the Maxcut instance from the graph.
+    # Internally builds the objective: max sum_{(i,j)} x_i + x_j - 2*x_i*x_j
     maxcut = Maxcut(graph)
 
-    # Convertir a OptimizationProblem: define variables binarias x_0..x_n
-    # y el polinomio objetivo de maximización
+    # Convert to OptimizationProblem: defines binary variables x_0..x_n
+    # and the maximization objective polynomial
     maxcut_problem = maxcut.to_optimization_problem()
 
     print(maxcut_problem.prettyprint())
